@@ -1589,6 +1589,31 @@ class FinanceDB:
             """
         )
 
+        # Older scheduled transactions were entered before the amount sign was
+        # derived from the category type, so some still carry whatever sign the
+        # user originally typed. Bring every row in line with the current
+        # convention (Expense -> negative, Income -> positive); safe to repeat.
+        self.conn.execute(
+            """
+            UPDATE scheduled_transactions
+            SET amount = -ABS(amount)
+            WHERE amount > 0
+              AND category_id IN (
+                  SELECT id FROM categories WHERE category_type = 'Expense'
+              )
+            """
+        )
+        self.conn.execute(
+            """
+            UPDATE scheduled_transactions
+            SET amount = ABS(amount)
+            WHERE amount < 0
+              AND category_id IN (
+                  SELECT id FROM categories WHERE category_type = 'Income'
+              )
+            """
+        )
+
         self.conn.commit()
 
     def get_setting(self, key, default=None):
