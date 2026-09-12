@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.6
+Version 0.10.7
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.7 fixes:
+- Scheduled and Budgetary transactions created before the amount sign was
+  derived from category type could still show the raw sign originally typed
+- Existing rows are now normalised (Expense -> negative, Income -> positive)
+  automatically on startup, matching rows added or edited since
+- Cosmetic only - forecasts and schedule processing already computed the
+  correct sign from category type independently
 
 Version 0.10.6 improves OFX importing:
 - Selected Likely/Possible manual matches can replace their existing manual Account Transaction
