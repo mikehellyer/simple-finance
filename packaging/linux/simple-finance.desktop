@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Simple Finance
+Comment=Personal finance, budgeting, forecasting and reconciliation
+Exec=/opt/simple-finance/SimpleFinance
+Icon=simple-finance
+Terminal=false
+Categories=Office;Finance;
+StartupNotify=true
+StartupWMClass=SimpleFinance
+Keywords=finance;money;budget;accounts;transactions;reconciliation;
