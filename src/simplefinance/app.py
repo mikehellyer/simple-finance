@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.12
+Version 0.10.13
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.13 fixes:
+- The 0.10.11 auto-quit-after-update never actually ran: it was gated
+  behind a blocking confirmation dialog that needed an explicit click to
+  dismiss, but focus jumps to the newly-opened installer/Finder window, so
+  the dialog sat unnoticed and the app stayed open
+- Removed that dialog - Update now quits the app directly (after a short
+  pause so the installer window has time to appear first)
 
 Version 0.10.12:
 - No functional change - test release to confirm the 0.10.11 red banner
@@ -6469,14 +6477,12 @@ class SimpleFinanceApp(tk.Tk):
             return
 
         open_installer(path)
-        messagebox.showinfo(
-            "Update downloaded",
-            f"The {release.tag} installer has been opened. "
-            f"{APP_NAME} will now close so you can finish installing it "
-            "(the running app would otherwise block replacing it).",
-            parent=self,
-        )
-        self.on_close()
+        # No blocking confirmation dialog here on purpose: a modal messagebox
+        # would need an explicit click to dismiss, but focus jumps to the
+        # newly-opened installer/Finder window, so the dialog sits unnoticed
+        # and the app never reaches the quit step. Just quit directly, with a
+        # short delay so the installer window has time to appear first.
+        self.after(1000, self.on_close)
 
     def _icon_candidates(self):
         return [
