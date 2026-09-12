@@ -7,6 +7,7 @@ main thread and marshalling the result back via Tk's .after().
 
 import json
 import re
+import ssl
 import subprocess
 import sys
 import tempfile
@@ -17,8 +18,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+import certifi
+
 API_TIMEOUT_SECONDS = 5
 DOWNLOAD_TIMEOUT_SECONDS = 30
+
+# PyInstaller builds on some platforms/toolchains (notably macOS via
+# actions/setup-python) don't carry a usable default CA bundle, so a frozen
+# app's HTTPS requests can fail with a certificate verification error even
+# though the same code works fine unfrozen. Pinning to certifi's bundled
+# CA file sidesteps that regardless of what the build environment had.
+_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
 _ASSET_PATTERNS = {
     "win32": re.compile(r"\.exe$", re.IGNORECASE),
@@ -65,7 +75,7 @@ def fetch_latest_release(repo: str, timeout: float = API_TIMEOUT_SECONDS) -> Opt
         url, headers={"Accept": "application/vnd.github+json", "User-Agent": "simplefinance-update-checker"}
     )
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        with urllib.request.urlopen(request, timeout=timeout, context=_SSL_CONTEXT) as response:
             data = json.loads(response.read().decode("utf-8"))
     except (urllib.error.URLError, TimeoutError, ValueError, OSError):
         return None
@@ -108,7 +118,9 @@ def download_asset(asset: ReleaseAsset, dest_dir: Path = None) -> Path:
     dest_dir = Path(dest_dir) if dest_dir else Path(tempfile.mkdtemp(prefix="simplefinance-update-"))
     dest_path = dest_dir / asset.name
     request = urllib.request.Request(asset.download_url, headers={"User-Agent": "simplefinance-update-checker"})
-    with urllib.request.urlopen(request, timeout=DOWNLOAD_TIMEOUT_SECONDS) as response, open(dest_path, "wb") as f:
+    with urllib.request.urlopen(
+        request, timeout=DOWNLOAD_TIMEOUT_SECONDS, context=_SSL_CONTEXT
+    ) as response, open(dest_path, "wb") as f:
         f.write(response.read())
     return dest_path
 

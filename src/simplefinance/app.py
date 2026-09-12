@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.8
+Version 0.10.9
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.9 fixes:
+- The update checker never actually worked on the built macOS installer -
+  the frozen app had no usable CA certificate bundle, so every HTTPS check
+  failed with a certificate error, which was silently treated the same as
+  "GitHub unreachable" (by design, so it never disrupts normal app use)
+- Bundles certifi's CA bundle with the app and points the update checker's
+  HTTPS requests at it explicitly, instead of relying on whatever the build
+  environment happened to provide
 
 Version 0.10.8 fixes:
 - The GitHub repo backing the update checker was renamed from

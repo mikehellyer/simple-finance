@@ -1,3 +1,5 @@
-# Simple Finance has no third-party runtime dependencies - it only uses the
-# Python standard library (tkinter, sqlite3, urllib). This file exists so the
-# packaging/CI steps have a stable place to pin one if that ever changes.
+# certifi provides a known-good CA certificate bundle for the update
+# checker's HTTPS calls. Needed because some PyInstaller build environments
+# (e.g. actions/setup-python on macOS) don't leave the frozen app with a
+# usable default CA bundle, which otherwise fails HTTPS silently.
+certifi==2026.7.22
