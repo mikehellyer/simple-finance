@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.11
+Version 0.10.12
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.12:
+- No functional change - test release to confirm the 0.10.11 red banner
+  styling and auto-quit-after-update behaviour work on a real install
 
 Version 0.10.11 improves the update banner:
 - Banner text and the Update button are now red so the notification is
