@@ -36,12 +36,6 @@ regressions in a 10k-line file with no prior test coverage.
 python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-python -m simplefinance          # run the app (run from src/, or `pip install -e .`... see below)
-```
-
-Because there's no `pyproject.toml` package install set up yet, run it via:
-
-```bash
 PYTHONPATH=src python -m simplefinance
 ```
 
