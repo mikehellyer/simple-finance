@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Local per-user app data if ever created inside the repo during dev testing
+*.db
+/backups/
+
+# OS cruft
+.DS_Store
+
+# Packaging outputs
+packaging/windows/*.exe
+packaging/macos/*.dmg
+packaging/linux/*.deb
