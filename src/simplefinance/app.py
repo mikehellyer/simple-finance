@@ -1614,6 +1614,28 @@ class FinanceDB:
             """
         )
 
+        # Same stale-sign issue, same fix, for budgetary (forecast-only) transactions.
+        self.conn.execute(
+            """
+            UPDATE budget_items
+            SET amount = -ABS(amount)
+            WHERE amount > 0
+              AND category_id IN (
+                  SELECT id FROM categories WHERE category_type = 'Expense'
+              )
+            """
+        )
+        self.conn.execute(
+            """
+            UPDATE budget_items
+            SET amount = ABS(amount)
+            WHERE amount < 0
+              AND category_id IN (
+                  SELECT id FROM categories WHERE category_type = 'Income'
+              )
+            """
+        )
+
         self.conn.commit()
 
     def get_setting(self, key, default=None):
