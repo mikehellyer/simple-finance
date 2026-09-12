@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.10
+Version 0.10.11
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.11 improves the update banner:
+- Banner text and the Update button are now red so the notification is
+  harder to miss
+- Clicking Update now quits Simple Finance after opening the downloaded
+  installer, instead of leaving the running app blocking its own
+  replacement in Applications/Program Files
 
 Version 0.10.10:
 - No functional change - test release to confirm the 0.10.9 update-checker
@@ -6414,9 +6421,13 @@ class SimpleFinanceApp(tk.Tk):
                 f"A new version of {APP_NAME} is available: {release.tag} "
                 f"(you have {APP_VERSION})."
             ),
+            style="UpdateBanner.TLabel",
         ).pack(side="left")
         ttk.Button(
-            banner, text="Update", command=lambda: self._start_update(release)
+            banner,
+            text="Update",
+            style="Update.TButton",
+            command=lambda: self._start_update(release),
         ).pack(side="right")
         ttk.Button(banner, text="Dismiss", command=banner.destroy).pack(
             side="right", padx=(0, 8)
@@ -6457,9 +6468,11 @@ class SimpleFinanceApp(tk.Tk):
         messagebox.showinfo(
             "Update downloaded",
             f"The {release.tag} installer has been opened. "
-            f"Finish the install, then restart {APP_NAME}.",
+            f"{APP_NAME} will now close so you can finish installing it "
+            "(the running app would otherwise block replacing it).",
             parent=self,
         )
+        self.on_close()
 
     def _icon_candidates(self):
         return [
@@ -6595,6 +6608,16 @@ class SimpleFinanceApp(tk.Tk):
         style.configure("Balance.TLabel", font=("Sans", 12, "bold"))
         style.configure("RegisterBalance.TLabel", font=("Sans", 14, "bold"))
         style.configure("Treeview", rowheight=26)
+
+        style.configure("UpdateBanner.TLabel", foreground="#c62828", font=("Sans", 10, "bold"))
+        style.configure(
+            "Update.TButton", foreground="white", background="#c62828", font=("Sans", 10, "bold")
+        )
+        style.map(
+            "Update.TButton",
+            background=[("active", "#b71c1c"), ("pressed", "#b71c1c")],
+            foreground=[("active", "white"), ("pressed", "white")],
+        )
 
     def _build_ui(self):
         header = ttk.Frame(self, padding=(14, 12))
