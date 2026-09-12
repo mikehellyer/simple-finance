@@ -53,14 +53,14 @@ def _mock_response(payload):
 def test_fetch_latest_release_parses_assets():
     payload = {
         "tag_name": "v1.2.3",
-        "html_url": "https://github.com/mikehellyer/finance/releases/tag/v1.2.3",
+        "html_url": "https://github.com/mikehellyer/simple-finance/releases/tag/v1.2.3",
         "assets": [
             {"name": "SimpleFinance-Setup.exe", "browser_download_url": "https://example.com/a.exe"},
             {"name": "SimpleFinance.dmg", "browser_download_url": "https://example.com/a.dmg"},
         ],
     }
     with patch("simplefinance.updater.urllib.request.urlopen", return_value=_mock_response(payload)):
-        release = fetch_latest_release("mikehellyer/finance")
+        release = fetch_latest_release("mikehellyer/simple-finance")
 
     assert release.tag == "v1.2.3"
     assert len(release.assets) == 2
@@ -72,7 +72,7 @@ def test_fetch_latest_release_returns_none_on_network_error():
         "simplefinance.updater.urllib.request.urlopen",
         side_effect=urllib.error.URLError("no network"),
     ):
-        assert fetch_latest_release("mikehellyer/finance") is None
+        assert fetch_latest_release("mikehellyer/simple-finance") is None
 
 
 def test_fetch_latest_release_returns_none_when_no_releases_yet():
@@ -80,19 +80,19 @@ def test_fetch_latest_release_returns_none_when_no_releases_yet():
         "simplefinance.updater.urllib.request.urlopen",
         side_effect=urllib.error.HTTPError("url", 404, "Not Found", {}, None),
     ):
-        assert fetch_latest_release("mikehellyer/finance") is None
+        assert fetch_latest_release("mikehellyer/simple-finance") is None
 
 
 def test_check_for_update_none_when_up_to_date():
     payload = {"tag_name": "0.10.6", "html_url": "", "assets": []}
     with patch("simplefinance.updater.urllib.request.urlopen", return_value=_mock_response(payload)):
-        assert check_for_update("mikehellyer/finance", "0.10.6") is None
+        assert check_for_update("mikehellyer/simple-finance", "0.10.6") is None
 
 
 def test_check_for_update_returns_release_when_newer():
     payload = {"tag_name": "0.11.0", "html_url": "", "assets": []}
     with patch("simplefinance.updater.urllib.request.urlopen", return_value=_mock_response(payload)):
-        release = check_for_update("mikehellyer/finance", "0.10.6")
+        release = check_for_update("mikehellyer/simple-finance", "0.10.6")
     assert release is not None
     assert release.tag == "0.11.0"
 

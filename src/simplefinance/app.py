@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.7
+Version 0.10.8
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.8 fixes:
+- The GitHub repo backing the update checker was renamed from
+  mikehellyer/finance to mikehellyer/simple-finance; the app now polls the
+  new name directly instead of relying on GitHub's rename redirect
 
 Version 0.10.7 fixes:
 - Scheduled and Budgetary transactions created before the amount sign was
