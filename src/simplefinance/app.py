@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.20
+Version 0.10.21
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.21:
+- No functional change - test release to confirm the 0.10.20 Linux update
+  fix (waiting for pkexec/apt to finish before quitting) works end to end
+  on a real install
 
 Version 0.10.20 fixes:
 - On Linux, the app quit on a fixed 1-second timer after starting the
