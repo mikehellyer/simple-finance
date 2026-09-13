@@ -10,6 +10,21 @@ This is the migrated, actively-developed successor to the original
 app data directory is still `~/.local/share/simple-finance` on Linux (and now
 also has proper per-OS locations on Windows/macOS).
 
+![Account Transactions screenshot](docs/images/screenshot-account-transactions.png)
+
+## Download
+
+Get the latest installer and the PDF user manual from the
+**[Releases page](https://github.com/mikehellyer/simple-finance/releases/latest)**:
+
+- **Windows**: `SimpleFinance-Setup.exe`
+- **macOS**: `SimpleFinance-<version>.dmg`
+- **Linux**: `simplefinance_<version>_amd64.deb`
+- **User Manual**: `Simple-Finance-User-Manual.pdf`
+
+Every release is built and published automatically by GitHub Actions when a
+version is tagged - see [Releasing](#releasing) below.
+
 ## Project layout
 
 ```
@@ -21,6 +36,8 @@ src/simplefinance/
     __main__.py    entry point (`python -m simplefinance`)
 tests/             pytest suite (currently: updater.py)
 packaging/         PyInstaller spec + per-OS installer build scripts
+docs/              build_manual.py generates the PDF user manual; images/
+                    holds README assets (not release artifacts)
 .github/workflows/ CI: test on every push/PR, build installers + publish a
                     GitHub Release when a v*.*.* tag is pushed
 ```
