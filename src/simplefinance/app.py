@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.16
+Version 0.10.17
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.17 fixes:
+- The Account Transactions register's Balance column (the last of 8) could
+  be clipped off the right edge of the window at the default size, since
+  the columns need ~1185px but the window only opened at 1180px wide -
+  spotted while generating a README screenshot and needing to manually
+  widen the window to see it
+- Default window size increased from 1180x760 to 1360x760, and the minimum
+  resizable size from 980x620 to 1300x620, so every register column is
+  visible without ever needing to resize manually
 
 Version 0.10.16 fixes:
 - PDF statement reconciliation could report Poppler's pdftotext as missing
@@ -6500,8 +6510,11 @@ class SimpleFinanceApp(tk.Tk):
 
         self.title(f"{APP_NAME} {APP_VERSION}")
         self._set_application_icon()
-        self.geometry("1180x760")
-        self.minsize(980, 620)
+        # Wide enough that the Account Transactions register's Balance column
+        # (the rightmost of 8 columns totalling ~1185px) is never clipped by
+        # default - previously only visible after manually widening the window.
+        self.geometry("1360x760")
+        self.minsize(1300, 620)
 
         self.db = FinanceDB()
         self.load_settings()
