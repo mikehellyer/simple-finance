@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.18
+Version 0.10.19
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.19:
+- No functional change - test release to confirm the 0.10.18 Linux update
+  fix (pkexec apt install instead of xdg-open) works end to end on a real
+  install
 
 Version 0.10.18 fixes:
 - On Linux, clicking Update handed the downloaded .deb to xdg-open, which
