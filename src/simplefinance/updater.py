@@ -149,18 +149,26 @@ class UpdateChecker:
         threading.Thread(target=worker, daemon=True).start()
 
 
-def open_installer(path: Path) -> None:
+def open_installer(path: Path) -> Optional[subprocess.Popen]:
     """Hand off to the OS's normal action for the downloaded installer (runs
     the .exe, mounts the .dmg, installs the .deb). Never runs anything
     silently/unattended - a privilege prompt or installer window always
-    appears for the user to complete."""
+    appears for the user to complete.
+
+    Returns the spawned process where there is one, so a caller on Linux can
+    wait for it to finish before quitting - quitting immediately there can
+    kill the pkexec authentication dialog before it's answered, since the
+    desktop session ties a launched app's child processes to its own
+    lifetime. os.startfile on Windows has no equivalent handle, hence None.
+    """
     path = str(path)
     if sys.platform == "win32":
         import os
 
         os.startfile(path)
+        return None
     elif sys.platform == "darwin":
-        subprocess.Popen(["open", path])
+        return subprocess.Popen(["open", path])
     else:
         # Handing a local .deb of an already-installed package to a desktop
         # "Software" GUI via xdg-open is unreliable across distros: several
@@ -171,6 +179,6 @@ def open_installer(path: Path) -> None:
         # Install directly via apt (through pkexec for a graphical privilege
         # prompt) instead, which correctly upgrades in place.
         if shutil.which("pkexec") and shutil.which("apt"):
-            subprocess.Popen(["pkexec", "apt", "install", "-y", path])
+            return subprocess.Popen(["pkexec", "apt", "install", "-y", path])
         else:
-            subprocess.Popen(["xdg-open", path])
+            return subprocess.Popen(["xdg-open", path])

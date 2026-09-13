@@ -86,7 +86,12 @@ matches the current OS and hands off to complete the install:
   "Uninstall" instead of "Install/Upgrade" and do nothing with the
   downloaded file if clicked.
 
-The app then quits itself so nothing it's running blocks the install.
+The app then quits itself so nothing it's running blocks the install. On
+Windows/macOS it quits after a short fixed delay; on Linux it waits for the
+pkexec/apt (or xdg-open) process to actually finish first, since the desktop
+session there ties a launched app's child processes to its own lifetime -
+quitting immediately would kill the pkexec password prompt before it could
+be answered.
 
 ## Packaging
 

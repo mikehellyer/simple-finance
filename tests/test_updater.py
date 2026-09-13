@@ -118,37 +118,44 @@ def test_open_installer_linux_prefers_pkexec_apt_over_xdg_open():
     with patch("simplefinance.updater.sys.platform", "linux"), patch(
         "simplefinance.updater.shutil.which", return_value="/usr/bin/found"
     ), patch("simplefinance.updater.subprocess.Popen") as mock_popen:
-        open_installer("/tmp/simplefinance_1.2.3_amd64.deb")
+        result = open_installer("/tmp/simplefinance_1.2.3_amd64.deb")
 
     mock_popen.assert_called_once_with(
         ["pkexec", "apt", "install", "-y", "/tmp/simplefinance_1.2.3_amd64.deb"]
     )
+    # The caller (app.py) waits on this before quitting, on Linux, so
+    # quitting can't kill the pkexec password prompt before it's answered.
+    assert result is mock_popen.return_value
 
 
 def test_open_installer_linux_falls_back_to_xdg_open_without_pkexec_or_apt():
     with patch("simplefinance.updater.sys.platform", "linux"), patch(
         "simplefinance.updater.shutil.which", return_value=None
     ), patch("simplefinance.updater.subprocess.Popen") as mock_popen:
-        open_installer("/tmp/simplefinance_1.2.3_amd64.deb")
+        result = open_installer("/tmp/simplefinance_1.2.3_amd64.deb")
 
     mock_popen.assert_called_once_with(
         ["xdg-open", "/tmp/simplefinance_1.2.3_amd64.deb"]
     )
+    assert result is mock_popen.return_value
 
 
 def test_open_installer_macos_uses_open():
     with patch("simplefinance.updater.sys.platform", "darwin"), patch(
         "simplefinance.updater.subprocess.Popen"
     ) as mock_popen:
-        open_installer("/tmp/SimpleFinance.dmg")
+        result = open_installer("/tmp/SimpleFinance.dmg")
 
     mock_popen.assert_called_once_with(["open", "/tmp/SimpleFinance.dmg"])
+    assert result is mock_popen.return_value
 
 
 def test_open_installer_windows_uses_startfile():
     with patch("simplefinance.updater.sys.platform", "win32"), patch(
         "os.startfile", create=True
     ) as mock_startfile:
-        open_installer("C:\\temp\\Setup.exe")
+        result = open_installer("C:\\temp\\Setup.exe")
 
     mock_startfile.assert_called_once_with("C:\\temp\\Setup.exe")
+    # No process handle for os.startfile - app.py falls back to a timed quit.
+    assert result is None

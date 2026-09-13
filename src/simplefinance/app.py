@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.19
+Version 0.10.20
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.20 fixes:
+- On Linux, the app quit on a fixed 1-second timer after starting the
+  pkexec/apt install, same as macOS/Windows - but the desktop session ties
+  a launched app's child processes to its own lifetime, so quitting killed
+  the pkexec password prompt before it could be answered
+- The app now waits for the install process to actually finish before
+  quitting, on Linux only; macOS/Windows keep the original fixed-delay quit
 
 Version 0.10.19:
 - No functional change - test release to confirm the 0.10.18 Linux update
@@ -6623,13 +6631,25 @@ class SimpleFinanceApp(tk.Tk):
             )
             return
 
-        open_installer(path)
+        process = open_installer(path)
         # No blocking confirmation dialog here on purpose: a modal messagebox
         # would need an explicit click to dismiss, but focus jumps to the
         # newly-opened installer/Finder window, so the dialog sits unnoticed
-        # and the app never reaches the quit step. Just quit directly, with a
-        # short delay so the installer window has time to appear first.
-        self.after(1000, self.on_close)
+        # and the app never reaches the quit step.
+        if sys.platform not in ("win32", "darwin") and process is not None:
+            # On Linux, quitting immediately can kill the pkexec password
+            # prompt (or xdg-open's Software Center) before it's answered -
+            # the desktop session ties a launched app's child processes to
+            # its own lifetime. Wait for it to actually finish instead.
+            def wait_then_quit():
+                process.wait()
+                self.after(0, self.on_close)
+
+            threading.Thread(target=wait_then_quit, daemon=True).start()
+        else:
+            # macOS/Windows: quit directly, with a short delay so the
+            # installer window has time to appear first.
+            self.after(1000, self.on_close)
 
     def _icon_candidates(self):
         return [
