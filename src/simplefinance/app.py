@@ -1,10 +1,21 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.17
+Version 0.10.18
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.18 fixes:
+- On Linux, clicking Update handed the downloaded .deb to xdg-open, which
+  several desktop "Software" GUIs (including GNOME Software / Pop!_Shop)
+  open showing an "Uninstall" action instead of "Install/Upgrade" for a
+  package name already installed - clicking it just removed the current
+  install and did nothing with the downloaded file, leaving nothing
+  installed
+- Update now installs the .deb directly via `pkexec apt install -y <path>`
+  (a native privilege prompt, then apt upgrades in place), falling back to
+  xdg-open only if pkexec/apt aren't present
 
 Version 0.10.17 fixes:
 - The Account Transactions register's Balance column (the last of 8) could

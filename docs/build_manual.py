@@ -787,6 +787,13 @@ story.append(
     )
 )
 story.append(
+    note(
+        "On Linux, clicking Update triggers your desktop's standard password "
+        "prompt (via <i>pkexec</i>) before installing the new version through "
+        "apt &mdash; this is expected, not a separate request from something else."
+    )
+)
+story.append(
     body(
         "You can also check the latest release at any time on GitHub: "
         "github.com/mikehellyer/simple-finance/releases"

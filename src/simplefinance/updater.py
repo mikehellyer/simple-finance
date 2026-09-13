@@ -7,6 +7,7 @@ main thread and marshalling the result back via Tk's .after().
 
 import json
 import re
+import shutil
 import ssl
 import subprocess
 import sys
@@ -149,9 +150,10 @@ class UpdateChecker:
 
 
 def open_installer(path: Path) -> None:
-    """Hand off to the OS's normal open action for the downloaded installer
-    (runs the .exe, mounts the .dmg, opens the .deb in the software installer).
-    Never runs anything silently/unattended - the user completes the install."""
+    """Hand off to the OS's normal action for the downloaded installer (runs
+    the .exe, mounts the .dmg, installs the .deb). Never runs anything
+    silently/unattended - a privilege prompt or installer window always
+    appears for the user to complete."""
     path = str(path)
     if sys.platform == "win32":
         import os
@@ -160,4 +162,15 @@ def open_installer(path: Path) -> None:
     elif sys.platform == "darwin":
         subprocess.Popen(["open", path])
     else:
-        subprocess.Popen(["xdg-open", path])
+        # Handing a local .deb of an already-installed package to a desktop
+        # "Software" GUI via xdg-open is unreliable across distros: several
+        # (including GNOME Software / Pop!_Shop) show an "Uninstall" action
+        # instead of "Install"/"Reinstall" for a package name already on the
+        # system, regardless of the file's version - clicking it just removes
+        # the current install and does nothing with the downloaded file.
+        # Install directly via apt (through pkexec for a graphical privilege
+        # prompt) instead, which correctly upgrades in place.
+        if shutil.which("pkexec") and shutil.which("apt"):
+            subprocess.Popen(["pkexec", "apt", "install", "-y", path])
+        else:
+            subprocess.Popen(["xdg-open", path])

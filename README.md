@@ -73,9 +73,20 @@ running version is current, nothing happens — the check fails silently.
 If a newer version is published, a banner appears above the tab bar with the
 new version number and two buttons: **Update** and **Dismiss**. Nothing is
 downloaded automatically. Clicking **Update** downloads the release asset that
-matches the current OS (`.exe` / `.dmg` / `.deb`) and hands off to the OS's
-normal "open this file" action — the user completes the actual install/reinstall
-step themselves.
+matches the current OS and hands off to complete the install:
+
+- **Windows**: runs the downloaded `.exe` installer.
+- **macOS**: opens the downloaded `.dmg` (Finder), then quits so the app
+  bundle isn't locked while you drag it to Applications.
+- **Linux**: installs the downloaded `.deb` directly via
+  `pkexec apt install -y <path>` (a native privilege prompt, then apt
+  upgrades in place), falling back to `xdg-open` if `pkexec`/`apt` aren't
+  present. Handing a local `.deb` of an already-installed package name to a
+  desktop "Software" GUI is unreliable across distros - several show
+  "Uninstall" instead of "Install/Upgrade" and do nothing with the
+  downloaded file if clicked.
+
+The app then quits itself so nothing it's running blocks the install.
 
 ## Packaging
 

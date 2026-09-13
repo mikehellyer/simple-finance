@@ -9,6 +9,7 @@ from simplefinance.updater import (
     check_for_update,
     fetch_latest_release,
     is_update_available,
+    open_installer,
     parse_version,
     pick_asset_for_platform,
 )
@@ -107,3 +108,47 @@ def test_pick_asset_for_platform():
     assert pick_asset_for_platform(assets, platform="darwin").name.endswith(".dmg")
     assert pick_asset_for_platform(assets, platform="linux").name.endswith(".deb")
     assert pick_asset_for_platform([], platform="win32") is None
+
+
+def test_open_installer_linux_prefers_pkexec_apt_over_xdg_open():
+    # Handing a local .deb to a desktop "Software" GUI via xdg-open is
+    # unreliable across distros (some show "Uninstall" instead of
+    # "Install/Upgrade" for an already-installed package name and do
+    # nothing useful) - installing directly via apt is deterministic.
+    with patch("simplefinance.updater.sys.platform", "linux"), patch(
+        "simplefinance.updater.shutil.which", return_value="/usr/bin/found"
+    ), patch("simplefinance.updater.subprocess.Popen") as mock_popen:
+        open_installer("/tmp/simplefinance_1.2.3_amd64.deb")
+
+    mock_popen.assert_called_once_with(
+        ["pkexec", "apt", "install", "-y", "/tmp/simplefinance_1.2.3_amd64.deb"]
+    )
+
+
+def test_open_installer_linux_falls_back_to_xdg_open_without_pkexec_or_apt():
+    with patch("simplefinance.updater.sys.platform", "linux"), patch(
+        "simplefinance.updater.shutil.which", return_value=None
+    ), patch("simplefinance.updater.subprocess.Popen") as mock_popen:
+        open_installer("/tmp/simplefinance_1.2.3_amd64.deb")
+
+    mock_popen.assert_called_once_with(
+        ["xdg-open", "/tmp/simplefinance_1.2.3_amd64.deb"]
+    )
+
+
+def test_open_installer_macos_uses_open():
+    with patch("simplefinance.updater.sys.platform", "darwin"), patch(
+        "simplefinance.updater.subprocess.Popen"
+    ) as mock_popen:
+        open_installer("/tmp/SimpleFinance.dmg")
+
+    mock_popen.assert_called_once_with(["open", "/tmp/SimpleFinance.dmg"])
+
+
+def test_open_installer_windows_uses_startfile():
+    with patch("simplefinance.updater.sys.platform", "win32"), patch(
+        "os.startfile", create=True
+    ) as mock_startfile:
+        open_installer("C:\\temp\\Setup.exe")
+
+    mock_startfile.assert_called_once_with("C:\\temp\\Setup.exe")
