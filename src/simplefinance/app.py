@@ -1,10 +1,21 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.15
+Version 0.10.16
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.16 fixes:
+- PDF statement reconciliation could report Poppler's pdftotext as missing
+  on macOS even when correctly installed via Homebrew: a GUI-launched app
+  (opened from Finder/Applications) gets a minimal PATH from launchd that
+  doesn't include Homebrew's /opt/homebrew/bin (Apple Silicon) or
+  /usr/local/bin (Intel), so shutil.which alone couldn't find it
+- Falls back to checking those install locations directly on macOS
+- The "not found" error message now gives the correct install instructions
+  for the OS actually running (Homebrew on macOS, Poppler for Windows +
+  PATH, apt on Ubuntu/Pop!_OS) instead of always showing the Linux command
 
 Version 0.10.15 changes:
 - Account Transactions now use the same amount convention as Scheduled and
@@ -734,14 +745,49 @@ def parse_statement_money(value):
     return number, False
 
 
+def find_pdftotext():
+    """Locate the Poppler pdftotext executable.
+
+    A GUI-launched app on macOS (opened from Finder/the Applications folder,
+    rather than a terminal) gets a minimal PATH from launchd that does not
+    include Homebrew's /opt/homebrew/bin (Apple Silicon) or /usr/local/bin
+    (Intel) - so pdftotext can be correctly installed and still invisible to
+    shutil.which. Fall back to checking those locations directly.
+    """
+    executable = shutil.which("pdftotext")
+    if executable:
+        return executable
+
+    if sys.platform == "darwin":
+        for candidate in ("/opt/homebrew/bin/pdftotext", "/usr/local/bin/pdftotext"):
+            if Path(candidate).exists():
+                return candidate
+
+    return None
+
+
 def extract_pdf_statement_text(path):
     """Extract text from a text-based PDF statement using Poppler pdftotext."""
-    executable = shutil.which("pdftotext")
+    executable = find_pdftotext()
     if not executable:
+        if sys.platform == "win32":
+            install_hint = (
+                "On Windows, search for \"Poppler for Windows\", download it, "
+                "and add its bin folder to your PATH."
+            )
+        elif sys.platform == "darwin":
+            install_hint = (
+                "On macOS, install it with Homebrew (https://brew.sh):\n"
+                "brew install poppler"
+            )
+        else:
+            install_hint = (
+                "On Ubuntu/Pop!_OS install it with:\n"
+                "sudo apt install poppler-utils"
+            )
         raise ValueError(
             "PDF statement support needs the Poppler 'pdftotext' utility.\n\n"
-            "On Ubuntu/Pop!_OS install it with:\n"
-            "sudo apt install poppler-utils"
+            + install_hint
         )
 
     try:
