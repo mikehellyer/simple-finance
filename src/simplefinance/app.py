@@ -1,10 +1,23 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.14
+Version 0.10.15
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.15 changes:
+- Account Transactions now use the same amount convention as Scheduled and
+  Budgetary transactions: always enter a positive number and choose an
+  Income or Expense Category, which decides the direction automatically
+- Category is now required when adding or editing an Account Transaction,
+  so the sign can always be derived (previously it could be left blank,
+  requiring the amount's sign to be typed manually)
+- When editing a transaction that already has a category, its amount is
+  now shown as a positive number, matching the new entry convention
+- This does not affect Transfers (still a positive amount moving between
+  two accounts), OFX import, PDF statement reconciliation, or CSV bulk
+  import, which continue to use bank/statement-derived signed amounts
 
 Version 0.10.14:
 - No functional change - end-to-end confirmation release for the full
@@ -1920,6 +1933,37 @@ class FinanceDB:
         ).fetchall()
 
     # ---------- Transactions ----------
+
+    def normalise_transaction_amount(self, category_id, amount):
+        """
+        Account Transaction amounts are interpreted using the category type,
+        the same convention as Scheduled and Budgetary transactions.
+
+        Expense category -> always negative
+        Income category  -> always positive
+        No category       -> preserve the sign entered by the user
+        """
+        amount = float(amount)
+
+        if category_id is None:
+            return amount
+
+        row = self.conn.execute(
+            "SELECT category_type FROM categories WHERE id = ?",
+            (category_id,),
+        ).fetchone()
+
+        if not row:
+            return amount
+
+        category_type = (row["category_type"] or "").strip().casefold()
+
+        if category_type == "expense":
+            return -abs(amount)
+        if category_type == "income":
+            return abs(amount)
+
+        return amount
 
     def add_transaction(
         self,
@@ -4477,8 +4521,8 @@ class TransactionDialog(tk.Toplevel):
             note = ttk.Label(
                 frame,
                 text=(
-                    "Negative = payment / money out. "
-                    "Positive = deposit / money in."
+                    "Enter the amount as a positive number. The selected "
+                    "Category decides whether it is Income or Expense."
                 ),
             )
             note.grid(
@@ -4538,8 +4582,13 @@ class TransactionDialog(tk.Toplevel):
                 self.payee_entry.insert(
                     0, edit_row["payee"] or ""
                 )
+                display_amount = (
+                    abs(edit_row["amount"])
+                    if edit_row["category_name"]
+                    else edit_row["amount"]
+                )
                 self.amount_entry.insert(
-                    0, f'{edit_row["amount"]:.2f}'
+                    0, f'{display_amount:.2f}'
                 )
                 self.memo_entry.insert(
                     0, edit_row["memo"] or ""
@@ -4656,8 +4705,27 @@ class TransactionDialog(tk.Toplevel):
             )
             return
 
+        if amount <= 0:
+            messagebox.showerror(
+                "Invalid amount",
+                "Enter the amount as a positive number greater than zero.",
+                parent=self,
+            )
+            return
+
         account_id = self.app.account_name_to_id[self.account_combo.get()]
-        category_id = self.app.category_name_to_id.get(self.category_combo.get())
+        category_name = self.category_combo.get().strip()
+        category_id = self.app.category_name_to_id.get(category_name)
+        if not category_id:
+            messagebox.showerror(
+                "No category",
+                "Choose an Income or Expense category so Simple Finance knows "
+                "whether this is money in or money out.",
+                parent=self,
+            )
+            return
+
+        amount = self.app.db.normalise_transaction_amount(category_id, amount)
 
         try:
             if self.txn_id:

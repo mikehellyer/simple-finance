@@ -391,12 +391,11 @@ story.append(
 )
 story.append(
     note(
-        "For an ordinary transaction, type the sign yourself: a <b>negative</b> "
-        "amount is money going out (a payment), and a <b>positive</b> amount is "
-        "money coming in (a deposit). This is different from Scheduled and "
-        "Budgetary transactions (sections 8 and 9), where you always type a "
-        "positive number and the category decides the direction &mdash; it's easy to "
-        "mix the two up.",
+        "Choose an <b>Income</b> or <b>Expense</b> Category and enter the "
+        "Amount as a <b>positive</b> number &mdash; the Category decides whether "
+        "it's money in or out, automatically. This is the same rule everywhere "
+        "in Simple Finance, including Scheduled and Budgetary transactions "
+        "(sections 8 and 9), so there's only one convention to remember.",
         kind="Important",
     )
 )
@@ -799,10 +798,12 @@ story.append(h1("Quick Reference: Things Worth Remembering"))
 story.extend(
     bullets(
         [
-            "<b>Sign conventions differ.</b> Ordinary Account Transactions use a "
-            "signed amount you type yourself (negative = out, positive = in). "
-            "Scheduled and Budgetary transactions always want a positive number "
-            "&mdash; the category decides the direction.",
+            "<b>One sign convention everywhere.</b> Account Transactions, "
+            "Scheduled and Budgetary transactions all work the same way: "
+            "always enter a positive number, and the Category (Income or "
+            "Expense) decides the direction automatically. The only "
+            "exception is a Transfer, entered as a positive amount that "
+            "moves between two accounts (see below).",
             "<b>Transfers</b> are always entered as a positive amount and can't be "
             "edited afterwards &mdash; delete and recreate them instead.",
             "<b>Changing an account's opening balance</b> recalculates its whole "
