@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.23
+Version 0.10.24
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.24 changes:
+- Masthead logo enlarged from 53px to 100px tall, after reviewing both
+  sizes live - 53px looked too small next to the header's other elements
 
 Version 0.10.23 changes:
 - Replaced the small icon + "Simple Finance" text in the top-left corner
@@ -6733,7 +6737,7 @@ class SimpleFinanceApp(tk.Tk):
         self._header_icon = image
         return image
 
-    def _create_header_logo(self, height=53):
+    def _create_header_logo(self, height=100):
         """
         Load the Simple Finance masthead (icon + wordmark + tagline) shown at
         the top left of the main window, scaled to the given display height.
@@ -6847,7 +6851,7 @@ class SimpleFinanceApp(tk.Tk):
         left_header = ttk.Frame(header)
         left_header.pack(side="left")
 
-        header_logo = self._create_header_logo(height=53)
+        header_logo = self._create_header_logo(height=100)
         if header_logo is not None:
             ttk.Label(left_header, image=header_logo).pack(side="left", padx=(0, 10))
         else:
