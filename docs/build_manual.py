@@ -409,6 +409,19 @@ story.append(
         "imported."
     )
 )
+story.append(h2("Searching"))
+story.append(
+    body(
+        "Use the <b>Search</b> box above the transaction list to quickly find "
+        "one among many. It matches as you type against the date, "
+        "description/payee, category, memo and amount of every transaction "
+        "in the selected account, and shows &ldquo;Showing X of Y "
+        "transactions&rdquo; while a search is active. Click <b>Clear</b> "
+        "(or empty the box) to see everything again. Each transaction's "
+        "Balance still reflects its real position in the full account "
+        "history, not just the filtered rows on screen."
+    )
+)
 story.append(h2("Transfers between accounts"))
 story.append(
     body(

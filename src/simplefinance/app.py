@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.21
+Version 0.10.22
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.22 adds:
+- A Search box on the Account Transactions tab, above the transaction list.
+  Matches as you type against date, description/payee, category, memo and
+  amount, and shows "Showing X of Y transactions" while active. A visible
+  transaction's Balance still reflects its real position in the full
+  account history, not a recomputed total over just the filtered rows.
+  Clear button (or emptying the box) restores the full list
 
 Version 0.10.21:
 - No functional change - test release to confirm the 0.10.20 Linux update
@@ -7459,6 +7467,23 @@ class SimpleFinanceApp(tk.Tk):
             top, textvariable=self.register_balance_var, style="RegisterBalance.TLabel"
         ).pack(side="right")
 
+        search_row = ttk.Frame(self.register_tab)
+        search_row.pack(fill="x", pady=(0, 8))
+
+        ttk.Label(search_row, text="Search:").pack(side="left")
+        self.register_search = ttk.Entry(search_row, width=40)
+        self.register_search.pack(side="left", padx=(8, 8))
+        self.register_search.bind("<KeyRelease>", lambda e: self.refresh_register())
+
+        ttk.Button(
+            search_row, text="Clear", command=self.clear_register_search
+        ).pack(side="left")
+
+        self.register_search_status_var = tk.StringVar(value="")
+        ttk.Label(
+            search_row, textvariable=self.register_search_status_var, foreground="#666666"
+        ).pack(side="left", padx=(12, 0))
+
         hint = ttk.Label(
             self.register_tab,
             text=(
@@ -10539,6 +10564,10 @@ class SimpleFinanceApp(tk.Tk):
         elif category_names:
             self.sch_category.set(category_names[0])
 
+    def clear_register_search(self):
+        self.register_search.delete(0, tk.END)
+        self.refresh_register()
+
     def refresh_register(self):
         for item in self.register_tree.get_children():
             self.register_tree.delete(item)
@@ -10546,11 +10575,14 @@ class SimpleFinanceApp(tk.Tk):
         account_id = self.current_register_account_id()
         if not account_id:
             self.register_balance_var.set("Balance: £0.00")
+            self.register_search_status_var.set("")
             return
 
         account = self.db.get_account(account_id)
         rows = self.db.get_register_transactions(account_id)
+        query = self.register_search.get().strip().casefold()
 
+        shown = 0
         for row in reversed(rows):
             payment = money(abs(row["amount"])) if row["amount"] < 0 else ""
             deposit = money(row["amount"]) if row["amount"] > 0 else ""
@@ -10558,6 +10590,25 @@ class SimpleFinanceApp(tk.Tk):
             if row["transfer_group"]:
                 category = "Transfer"
 
+            if query:
+                # Search runs against the account's full transaction history
+                # (before this loop's filtering), so each visible row's
+                # Balance stays its true running balance, not a recomputed
+                # total over just the matches.
+                haystack = " ".join(
+                    (
+                        self.format_date(row["txn_date"]),
+                        row["payee"] or "",
+                        category or "",
+                        row["memo"] or "",
+                        payment,
+                        deposit,
+                    )
+                ).casefold()
+                if query not in haystack:
+                    continue
+
+            shown += 1
             self.register_tree.insert(
                 "",
                 "end",
@@ -10575,6 +10626,9 @@ class SimpleFinanceApp(tk.Tk):
             )
 
         self.register_balance_var.set(f'Balance: {money(account["balance"])}')
+        self.register_search_status_var.set(
+            f"Showing {shown} of {len(rows)} transactions" if query else ""
+        )
 
         children = self.register_tree.get_children()
         if children:
