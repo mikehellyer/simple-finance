@@ -10,6 +10,7 @@ import certifi
 ROOT = os.path.abspath(os.path.join(SPECPATH, "..", ".."))
 SRC = os.path.join(ROOT, "src")
 ICON_PNG = os.path.join(SRC, "simplefinance", "icon.png")
+LOGO_PNG = os.path.join(SRC, "simplefinance", "logo.png")
 ICON_ICO = os.path.join(ROOT, "packaging", "windows", "icon.ico")
 ICON_ICNS = os.path.join(ROOT, "packaging", "macos", "icon.icns")
 
@@ -21,7 +22,11 @@ a = Analysis(
     binaries=[],
     # certifi ships no PyInstaller hook, so its CA bundle needs bundling by
     # hand - updater.py points urllib at this file explicitly at runtime.
-    datas=[(ICON_PNG, "simplefinance"), (certifi.where(), "certifi")],
+    datas=[
+        (ICON_PNG, "simplefinance"),
+        (LOGO_PNG, "simplefinance"),
+        (certifi.where(), "certifi"),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.22
+Version 0.10.23
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.23 changes:
+- Replaced the small icon + "Simple Finance" text in the top-left corner
+  with the new Simple-Finance masthead logo (icon, wordmark and "Track -
+  Plan - Take Control" tagline) at 53px tall. Falls back to the plain
+  "Simple Finance" text if logo.png is ever missing. Version number still
+  shown alongside it
 
 Version 0.10.22 adds:
 - A Search box on the Account Transactions tab, above the transaction list.
@@ -6726,6 +6733,30 @@ class SimpleFinanceApp(tk.Tk):
         self._header_icon = image
         return image
 
+    def _create_header_logo(self, height=53):
+        """
+        Load the Simple Finance masthead (icon + wordmark + tagline) shown at
+        the top left of the main window, scaled to the given display height.
+        """
+        logo_path = Path(__file__).resolve().with_name("logo.png")
+        if not logo_path.exists():
+            self._header_logo = None
+            return None
+
+        try:
+            image = tk.PhotoImage(file=str(logo_path))
+        except tk.TclError:
+            self._header_logo = None
+            return None
+
+        source_height = max(1, int(image.height()))
+        factor = max(1, round(source_height / height))
+        if factor > 1:
+            image = image.subsample(factor, factor)
+
+        self._header_logo = image
+        return image
+
     def load_settings(self):
         value = self.db.get_setting("date_format", "UK")
         if value not in DATE_FORMATS:
@@ -6816,11 +6847,12 @@ class SimpleFinanceApp(tk.Tk):
         left_header = ttk.Frame(header)
         left_header.pack(side="left")
 
-        header_icon = self._create_header_icon(size=32)
-        if header_icon is not None:
-            ttk.Label(left_header, image=header_icon).pack(side="left", padx=(0, 10))
+        header_logo = self._create_header_logo(height=53)
+        if header_logo is not None:
+            ttk.Label(left_header, image=header_logo).pack(side="left", padx=(0, 10))
+        else:
+            ttk.Label(left_header, text=APP_NAME, style="Title.TLabel").pack(side="left")
 
-        ttk.Label(left_header, text=APP_NAME, style="Title.TLabel").pack(side="left")
         ttk.Label(
             left_header, text=f"Version {APP_VERSION}", foreground="#666666"
         ).pack(side="left", padx=(10, 0))
