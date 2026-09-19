@@ -768,6 +768,38 @@ story.append(
     )
 )
 
+story.append(h2("Exporting to Moneydance"))
+story.append(
+    body(
+        "The <b>Export to Moneydance</b> box on the <b>Backup &amp; Restore</b> "
+        "tab saves your data as a <b>QIF</b> file that Moneydance can import. "
+        "It includes every account (with its type and opening balance), all "
+        "categories, and every transaction &mdash; including transfers between "
+        "accounts and each transaction's reconciled status."
+    )
+)
+story.append(
+    body(
+        "In Moneydance, choose <b>File &gt; Import</b>, pick the exported "
+        "file, and check that the <b>Date Format</b> is MM/DD/YYYY before "
+        "importing. Afterwards compare each account's balance with Simple "
+        "Finance; if one is off, set its Initial Balance under <b>Account "
+        "&gt; Edit Account</b>."
+    )
+)
+story.append(
+    note(
+        "QIF can't represent Scheduled Transactions, Budgetary Transactions or "
+        "Scenario Sheets, so those are not exported &mdash; they stay in Simple "
+        "Finance. QIF is also plain ASCII: accented and special characters in "
+        "payees and memos are simplified, and a <i>/</i>, <i>:</i> or "
+        "<i>[ ]</i> in a category or account name is replaced (for example "
+        "&ldquo;Mortgage / Rent&rdquo; becomes &ldquo;Mortgage - Rent&rdquo;) "
+        "because QIF treats those characters specially. The export window "
+        "lists any names it changed."
+    )
+)
+
 # 12. Settings
 story.append(h1("12. Settings"))
 story.append(

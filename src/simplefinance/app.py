@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.24
+Version 0.10.25
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.25 adds:
+- Export to Moneydance: a new box on the Backup & Restore tab saves all
+  accounts (type + opening balance), categories and transactions - including
+  transfers between accounts and reconciled status - as a QIF file that
+  Moneydance can import (File > Import). QIF can't represent Scheduled
+  Transactions, Budgetary Transactions or Scenario Sheets, so those are not
+  exported. Text is reduced to plain ASCII (QIF's encoding) and "/", ":" and
+  "[ ]" in category/account names are replaced, since QIF treats them
+  specially; the completion message lists any names changed
 
 Version 0.10.24 changes:
 - Masthead logo enlarged from 53px to 100px tall, after reviewing both
@@ -405,6 +415,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog, simpledialog
 
 from simplefinance import paths
+from simplefinance.qif_export import build_qif, write_qif
 from simplefinance.version import __version__, GITHUB_REPO
 from simplefinance.updater import (
     UpdateChecker,
@@ -2725,6 +2736,34 @@ class FinanceDB:
             """,
             (txn_id,),
         ).fetchone()
+
+    def get_export_data(self):
+        """Everything the QIF exporter needs: (accounts, categories, transactions)
+        as plain dicts. Includes inactive accounts and every transaction."""
+        accounts = [
+            dict(row)
+            for row in self.conn.execute(
+                "SELECT id, name, account_type, opening_balance FROM accounts ORDER BY id"
+            )
+        ]
+        categories = [
+            dict(row)
+            for row in self.conn.execute(
+                "SELECT id, name, category_type FROM categories ORDER BY id"
+            )
+        ]
+        transactions = [
+            dict(row)
+            for row in self.conn.execute(
+                """
+                SELECT id, txn_date, account_id, category_id, payee, memo, amount,
+                       transfer_group, reconciled
+                FROM transactions
+                ORDER BY txn_date, id
+                """
+            )
+        ]
+        return accounts, categories, transactions
 
     def get_transactions(self):
         return self.conn.execute(
@@ -7093,6 +7132,29 @@ class SimpleFinanceApp(tk.Tk):
             command=self.restore_backup,
         ).pack(anchor="w")
 
+        export_box = ttk.LabelFrame(
+            self.backup_tab, text="Export to Moneydance", padding=14
+        )
+        export_box.pack(fill="x", pady=(0, 12))
+
+        ttk.Label(
+            export_box,
+            text=(
+                "Saves your accounts, categories and every transaction (including "
+                "transfers and reconciled status) as a QIF file that Moneydance can "
+                "import. Scheduled Transactions, Budgetary Transactions and Scenario "
+                "Sheets can't be represented in QIF, so they are not included."
+            ),
+            wraplength=850,
+            justify="left",
+        ).pack(anchor="w", pady=(0, 10))
+
+        ttk.Button(
+            export_box,
+            text="Export to Moneydance (QIF)...",
+            command=self.export_moneydance_qif,
+        ).pack(anchor="w")
+
         auto_box = ttk.LabelFrame(
             self.backup_tab, text="Automatic backups", padding=14
         )
@@ -7143,6 +7205,52 @@ class SimpleFinanceApp(tk.Tk):
             )
 
         self.backup_status_var.set(text)
+
+    def export_moneydance_qif(self):
+        default_name = (
+            "simple_finance_moneydance_" + datetime.now().strftime("%Y-%m-%d") + ".qif"
+        )
+        path = filedialog.asksaveasfilename(
+            parent=self,
+            title="Export for Moneydance",
+            defaultextension=".qif",
+            filetypes=[("QIF file", "*.qif"), ("All files", "*")],
+            initialfile=default_name,
+        )
+        if not path:
+            return
+
+        try:
+            accounts, categories, transactions = self.db.get_export_data()
+            export = build_qif(accounts, categories, transactions)
+            write_qif(path, export)
+        except (OSError, ValueError, sqlite3.Error) as exc:
+            messagebox.showerror(
+                "Export failed",
+                f"Could not export the Moneydance file:\n\n{exc}",
+                parent=self,
+            )
+            return
+
+        details = (
+            f"Exported {export.account_count} account(s), {export.category_count} "
+            f"categories and {export.transaction_count} transactions "
+            f"({export.transfer_count} transfer(s)) to:\n\n{path}\n\n"
+            "In Moneydance choose File > Import, pick this file, and check the "
+            "Date Format is MM/DD/YYYY. Afterwards compare each account's balance; "
+            "if one is off, set its Initial Balance under Account > Edit Account.\n\n"
+            "Note: QIF is plain ASCII, so accented and special characters in "
+            "payees and memos are simplified."
+        )
+        if export.renames:
+            shown = export.renames[:8]
+            details += "\n\nRenamed for QIF (special characters):\n" + "\n".join(
+                f"  {kind}: {old} -> {new}" for kind, old, new in shown
+            )
+            if len(export.renames) > len(shown):
+                details += f"\n  ...and {len(export.renames) - len(shown)} more"
+
+        messagebox.showinfo("Export complete", details, parent=self)
 
     def manual_backup(self):
         default_name = (
