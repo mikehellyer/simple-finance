@@ -623,6 +623,26 @@ story.append(
         "starter file in the right format."
     )
 )
+story.append(
+    body(
+        "<b>Export CSV...</b> saves every scheduled transaction to a "
+        "spreadsheet-friendly file. The first six columns (Day of Month, "
+        "Account, Category, Payee, Amount, Frequency) are the same ones "
+        "<b>Import CSV...</b> reads, so the file can be imported again; "
+        "Name, Next Date (written as YYYY-MM-DD), Memo and Active follow "
+        "as extra columns. Amounts keep their sign &mdash; expenses negative, "
+        "income positive."
+    )
+)
+story.append(
+    note(
+        "Import CSV only understands a day of the month, so it works out the "
+        "next due date itself &mdash; it won't restore an exact Next Date, and "
+        "importing into data that already has these schedules creates "
+        "duplicates. Use the exported file mainly as a record or for "
+        "spreadsheets, and re-import into a fresh setup."
+    )
+)
 
 # 8. Budgetary transactions
 story.append(h1("8. Budgetary Transactions"))

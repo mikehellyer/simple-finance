@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 """
 Simple Finance
-Version 0.10.25
+Version 0.10.26
 
 A lightweight Moneydance-style personal finance program for Linux using
 only Python's standard library: Tkinter + SQLite.
+
+Version 0.10.26 adds:
+- Export CSV on the Scheduled tab saves every scheduled transaction to a CSV
+  file. The first six columns (Day of Month, Account, Category, Payee,
+  Amount, Frequency) are exactly what Import CSV reads, so an export can be
+  re-imported; Name, Next Date (ISO), Memo and Active follow as extra
+  columns the importer ignores. Amounts keep their stored sign
 
 Version 0.10.25 adds:
 - Export to Moneydance: a new box on the Backup & Restore tab saves all
@@ -416,6 +423,7 @@ from tkinter import ttk, messagebox, filedialog, simpledialog
 
 from simplefinance import paths
 from simplefinance.qif_export import build_qif, write_qif
+from simplefinance.schedule_export import write_schedules_csv
 from simplefinance.version import __version__, GITHUB_REPO
 from simplefinance.updater import (
     UpdateChecker,
@@ -3249,6 +3257,7 @@ class FinanceDB:
                 a.name AS account_name,
                 COALESCE(c.name, '') AS category_name,
                 COALESCE(s.payee, '') AS payee,
+                COALESCE(s.memo, '') AS memo,
                 s.amount,
                 s.frequency,
                 s.next_date,
@@ -10246,6 +10255,10 @@ class SimpleFinanceApp(tk.Tk):
         ).pack(side="left", padx=(8, 0))
 
         ttk.Button(
+            bottom, text="Export CSV...", command=self.export_schedules_csv
+        ).pack(side="left", padx=(8, 0))
+
+        ttk.Button(
             bottom, text="Edit selected schedule", command=self.edit_schedule
         ).pack(side="left", padx=(8, 0))
 
@@ -10310,6 +10323,45 @@ class SimpleFinanceApp(tk.Tk):
         self.sch_memo.delete(0, tk.END)
         self.sch_amount.delete(0, tk.END)
         self.refresh_all()
+
+    def export_schedules_csv(self):
+        schedules = self.db.get_schedules()
+        if not schedules:
+            messagebox.showinfo(
+                "Nothing to export",
+                "There are no scheduled transactions to export yet.",
+                parent=self,
+            )
+            return
+
+        path = filedialog.asksaveasfilename(
+            parent=self,
+            title="Export scheduled transactions to CSV",
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*")],
+            initialfile=(
+                "scheduled_transactions_" + datetime.now().strftime("%Y-%m-%d") + ".csv"
+            ),
+        )
+        if not path:
+            return
+
+        try:
+            count = write_schedules_csv(path, schedules)
+        except OSError as exc:
+            messagebox.showerror("Export failed", f"Could not save the CSV:\n\n{exc}", parent=self)
+            return
+
+        messagebox.showinfo(
+            "Export complete",
+            f"Exported {count} scheduled transaction(s) to:\n\n{path}\n\n"
+            "The first six columns match Import CSV, so the file can be imported "
+            "again (importing into the same data would create duplicates). Name, "
+            "Next Date (YYYY-MM-DD), Memo and Active are included as extra "
+            "columns the importer ignores. Amounts keep their sign: expenses "
+            "negative, income positive.",
+            parent=self,
+        )
 
     def save_schedule_csv_template(self):
         path = filedialog.asksaveasfilename(
